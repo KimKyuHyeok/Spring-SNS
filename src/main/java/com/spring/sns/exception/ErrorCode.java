@@ -14,6 +14,8 @@ public enum ErrorCode {
 
     INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "Password is invalid"),
 
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid token"),
+
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"),
     ;
     private HttpStatus status;
