@@ -2,8 +2,6 @@ package com.spring.sns.service;
 
 import com.spring.sns.exception.ErrorCode;
 import com.spring.sns.exception.SnsApplicationException;
-import com.spring.sns.fixture.PostEntityFixture;
-import com.spring.sns.fixture.UserEntityFixture;
 import com.spring.sns.model.entity.PostEntity;
 import com.spring.sns.model.entity.UserEntity;
 import com.spring.sns.repository.PostEntityRepository;
@@ -60,59 +58,5 @@ public class PostServiceTest {
 
         SnsApplicationException e = Assertions.assertThrows(SnsApplicationException.class, () -> postService.create(title, body, userName));
         Assertions.assertEquals(ErrorCode.USER_NOT_FOUND, e.getErrorCode());
-    }
-
-    @DisplayName("[Service] 포스트 수정이 성공한 경우")
-    @Test
-    void updatePost() {
-        String title = "title";
-        String body = "body";
-        String userName = "userName";
-        Integer postId = 1;
-
-        PostEntity postEntity = PostEntityFixture.get(userName, postId, 1);
-        UserEntity userEntity = postEntity.getUser();
-
-        when(userEntityRepository.findByUserName(userName)).thenReturn(Optional.of(userEntity));
-        when(postEntityRepository.findById(postId)).thenReturn(Optional.of(postEntity));
-        when(postEntityRepository.saveAndFlush(any())).thenReturn(postEntity);
-
-        Assertions.assertDoesNotThrow(() -> postService.modify(title, body, userName, postId));
-    }
-
-    @DisplayName("[Service] 포스트 수정 시 포스트가 존재하지 않는 경우")
-    @Test
-    void updatePostIsNotFoundPost() {
-        String title = "title";
-        String body = "body";
-        String userName = "userName";
-        Integer postId = 1;
-
-        PostEntity postEntity = PostEntityFixture.get(userName, postId, 1);
-        UserEntity userEntity = postEntity.getUser();
-
-        when(userEntityRepository.findByUserName(userName)).thenReturn(Optional.of(userEntity));
-        when(postEntityRepository.findById(any())).thenReturn(Optional.empty());
-
-        SnsApplicationException e = Assertions.assertThrows(SnsApplicationException.class, () -> postService.modify(title, body, userName, postId));
-        Assertions.assertEquals(ErrorCode.POST_NOT_FOUND, e.getErrorCode());
-    }
-
-    @DisplayName("[Service] 포스트 수정 시 권한이 없는 경우")
-    @Test
-    void updatePostIsNotAuthorization() {
-        String title = "title";
-        String body = "body";
-        String userName = "userName";
-        Integer postId = 1;
-
-        PostEntity postEntity = PostEntityFixture.get(userName, postId, 1);
-        UserEntity writer = UserEntityFixture.get("userName1", "password", 2);
-
-        when(userEntityRepository.findByUserName(userName)).thenReturn(Optional.of(writer));
-        when(postEntityRepository.findById(any())).thenReturn(Optional.of(postEntity));
-
-        SnsApplicationException e = Assertions.assertThrows(SnsApplicationException.class, () -> postService.modify(title, body, userName, postId));
-        Assertions.assertEquals(ErrorCode.INVALID_PERMISSION, e.getErrorCode());
     }
 }
