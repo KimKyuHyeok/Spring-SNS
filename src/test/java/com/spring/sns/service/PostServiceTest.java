@@ -14,6 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -114,5 +117,71 @@ public class PostServiceTest {
 
         SnsApplicationException e = Assertions.assertThrows(SnsApplicationException.class, () -> postService.modify(title, body, userName, postId));
         Assertions.assertEquals(ErrorCode.INVALID_PERMISSION, e.getErrorCode());
+    }
+
+    @DisplayName("[Service] 포스트 삭제가 성공한 경우")
+    @Test
+    void deletePost() {
+        String userName = "userName";
+        Integer postId = 1;
+
+        PostEntity postEntity = PostEntityFixture.get(userName, postId, 1);
+        UserEntity userEntity = postEntity.getUser();
+
+        when(userEntityRepository.findByUserName(userName)).thenReturn(Optional.of(userEntity));
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.of(postEntity));
+
+        Assertions.assertDoesNotThrow(() -> postService.delete(userName, 1));
+    }
+
+    @DisplayName("[Service] 포스트 삭제 시 포스트가 존재하지 않는 경우")
+    @Test
+    void deletePostIsNotFound() {
+        String userName = "userName";
+        Integer postId = 1;
+
+        PostEntity postEntity = PostEntityFixture.get(userName, postId, 1);
+        UserEntity userEntity = postEntity.getUser();
+
+        when(userEntityRepository.findByUserName(userName)).thenReturn(Optional.of(userEntity));
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.empty());
+
+        SnsApplicationException e = Assertions.assertThrows(SnsApplicationException.class, () -> postService.delete(userName, 1));
+        Assertions.assertEquals(ErrorCode.POST_NOT_FOUND, e.getErrorCode());
+    }
+
+    @DisplayName("[Service] 포스트 삭제 시 권한이 없는 경우")
+    @Test
+    void deletePostIsNotAuthorization() {
+        String title = "title";
+        String body = "body";
+        String userName = "userName";
+        Integer postId = 1;
+
+        PostEntity postEntity = PostEntityFixture.get(userName, postId, 1);
+        UserEntity writer = UserEntityFixture.get("userName1", "password", 2);
+
+        when(userEntityRepository.findByUserName(userName)).thenReturn(Optional.of(writer));
+        when(postEntityRepository.findById(any())).thenReturn(Optional.of(postEntity));
+
+        SnsApplicationException e = Assertions.assertThrows(SnsApplicationException.class, () -> postService.delete(userName, 1));
+        Assertions.assertEquals(ErrorCode.INVALID_PERMISSION, e.getErrorCode());
+    }
+
+    @DisplayName("[Service] 피드 목록 요청")
+    @Test
+    void getFeedList() {
+
+        Pageable pageable = mock(Pageable.class);
+        when(postEntityRepository.findAll(pageable)).thenReturn(Page.empty());
+        Assertions.assertDoesNotThrow(() -> postService.list(pageable));
+    }
+
+    @DisplayName("[Service] 내 피드 목록 요청")
+    @Test
+    void my() {
+        Pageable pageable = mock(Pageable.class);
+        when(postEntityRepository.findAllByUser(any() ,pageable)).thenReturn(Page.empty());
+        Assertions.assertDoesNotThrow(() -> postService.my("", pageable));
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -23,8 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -136,5 +136,105 @@ public class PostControllerTest {
                         .content(objectMapper.writeValueAsBytes(new PostModifyRequest(title, body)))
                 ).andDo(print())
                 .andExpect(status().isNotFound());
+    }
+
+    @DisplayName("[Controller] 포스트 삭제")
+    @Test
+    @WithMockUser
+    void deletePost() throws Exception {
+
+        mockMvc.perform(delete("/api/v1/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @DisplayName("[Controller] 포스트 삭제 시 로그인을 하지 않은 경우")
+    @Test
+    @WithAnonymousUser
+    void deletePostIsUnauthorized() throws Exception {
+
+        mockMvc.perform(delete("/api/v1/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("[Controller] 포스트 삭제 시 권한이 없는 경우")
+    @Test
+    @WithMockUser
+    void deletePostIsNotAuthorization() throws Exception {
+
+        doThrow(new SnsApplicationException(ErrorCode.INVALID_PERMISSION)).when(postService).delete(any(), any());
+
+        mockMvc.perform(delete("/api/v1/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("[Controller] 포스트 삭제 시 해당 포스트가 존재하지 않는 경우")
+    @Test
+    @WithMockUser
+    void deletePostIsNotFound() throws Exception {
+
+        doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).delete(any(), any());
+
+        mockMvc.perform(delete("/api/v1/posts/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @DisplayName("[Controller] 피드 목록 가져오기")
+    @Test
+    @WithMockUser
+    void getFeedList() throws Exception {
+
+        when(postService.list(any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/v1/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @DisplayName("[Controller] 피드 목록 요청 시 로그인이 되지 않은 경우")
+    @Test
+    @WithAnonymousUser
+    void getFeedListIsUnauthorized() throws Exception {
+
+        when(postService.list(any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/v1/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("[Controller] 내 피드 목록 가져오기")
+    @Test
+    @WithMockUser
+    void getMyFeedList() throws Exception {
+
+        when(postService.my(any(), any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/v1/posts/my")
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @DisplayName("[Controller] 내 피드 목록 요청 시 로그인이 되지 않은 경우")
+    @Test
+    @WithAnonymousUser
+    void getMyFeedListIsUnauthorized() throws Exception {
+
+        when(postService.my(any(), any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/v1/posts/my")
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isUnauthorized());
     }
 }
