@@ -3,8 +3,10 @@ package com.spring.sns.service;
 import com.spring.sns.exception.ErrorCode;
 import com.spring.sns.exception.SnsApplicationException;
 import com.spring.sns.model.Post;
+import com.spring.sns.model.entity.LikeEntity;
 import com.spring.sns.model.entity.PostEntity;
 import com.spring.sns.model.entity.UserEntity;
+import com.spring.sns.repository.LikeEntityRepository;
 import com.spring.sns.repository.PostEntityRepository;
 import com.spring.sns.repository.UserEntityRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class PostService {
 
     private final PostEntityRepository postEntityRepository;
     private final UserEntityRepository userEntityRepository;
+    private final LikeEntityRepository likeEntityRepository;
 
     @Transactional
     public void create(String title, String body, String userName) {
@@ -76,5 +79,21 @@ public class PostService {
                 new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", userName)));
 
         return postEntityRepository.findAllByUser(userEntity ,pageable).map(Post::fromEntity);
+    }
+
+    @Transactional
+    public void like(Integer postId, String userName) {
+        PostEntity postEntity = postEntityRepository.findById(postId).orElseThrow(() ->
+                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not founded", postId)));
+
+        UserEntity userEntity = userEntityRepository.findByUserName(userName).orElseThrow(() ->
+                new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", userName)));
+
+        likeEntityRepository.findByUserAndPost(userEntity, postEntity).ifPresent(it -> {
+            throw new SnsApplicationException(ErrorCode.ALREADY_LIKD, String.format("userName %s already like post %s", userName, postId));
+        });
+
+        likeEntityRepository.save(LikeEntity.of(userEntity, postEntity));
+
     }
 }
