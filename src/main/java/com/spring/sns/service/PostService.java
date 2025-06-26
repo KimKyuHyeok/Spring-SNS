@@ -96,4 +96,12 @@ public class PostService {
         likeEntityRepository.save(LikeEntity.of(userEntity, postEntity));
 
     }
+
+    @Transactional
+    public int likeCount(Integer postId) {
+        PostEntity postEntity = postEntityRepository.findById(postId).orElseThrow(() ->
+                new SnsApplicationException(ErrorCode.POST_NOT_FOUND, String.format("%s not founded", postId)));
+
+        return likeEntityRepository.countByPost(postEntity);
+    }
 }
