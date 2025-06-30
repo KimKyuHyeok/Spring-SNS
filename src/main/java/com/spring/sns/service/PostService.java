@@ -2,16 +2,12 @@ package com.spring.sns.service;
 
 import com.spring.sns.exception.ErrorCode;
 import com.spring.sns.exception.SnsApplicationException;
+import com.spring.sns.model.AlarmArgs;
+import com.spring.sns.model.AlarmType;
 import com.spring.sns.model.Comment;
 import com.spring.sns.model.Post;
-import com.spring.sns.model.entity.CommentEntity;
-import com.spring.sns.model.entity.LikeEntity;
-import com.spring.sns.model.entity.PostEntity;
-import com.spring.sns.model.entity.UserEntity;
-import com.spring.sns.repository.CommentEntityRepository;
-import com.spring.sns.repository.LikeEntityRepository;
-import com.spring.sns.repository.PostEntityRepository;
-import com.spring.sns.repository.UserEntityRepository;
+import com.spring.sns.model.entity.*;
+import com.spring.sns.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +24,7 @@ public class PostService {
     private final UserEntityRepository userEntityRepository;
     private final LikeEntityRepository likeEntityRepository;
     private final CommentEntityRepository commentEntityRepository;
+    private final AlarmEntityRepository alarmEntityRepository;
 
     @Transactional
     public void create(String title, String body, String userName) {
@@ -89,7 +86,7 @@ public class PostService {
         });
 
         likeEntityRepository.save(LikeEntity.of(userEntity, postEntity));
-
+        alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_LIKE_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
     }
 
     public int likeCount(Integer postId) {
@@ -104,6 +101,7 @@ public class PostService {
         UserEntity userEntity = getUserOrException(userName);
 
         commentEntityRepository.save(CommentEntity.of(comment, userEntity, postEntity));
+        alarmEntityRepository.save(AlarmEntity.of(postEntity.getUser(), AlarmType.NEW_COMMENT_ON_POST, new AlarmArgs(userEntity.getId(), postEntity.getId())));
     }
 
     public Page<Comment> getComment(Integer postId, Pageable pageable) {
