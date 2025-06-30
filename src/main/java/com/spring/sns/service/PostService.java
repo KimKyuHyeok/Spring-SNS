@@ -2,10 +2,13 @@ package com.spring.sns.service;
 
 import com.spring.sns.exception.ErrorCode;
 import com.spring.sns.exception.SnsApplicationException;
+import com.spring.sns.model.Comment;
 import com.spring.sns.model.Post;
+import com.spring.sns.model.entity.CommentEntity;
 import com.spring.sns.model.entity.LikeEntity;
 import com.spring.sns.model.entity.PostEntity;
 import com.spring.sns.model.entity.UserEntity;
+import com.spring.sns.repository.CommentEntityRepository;
 import com.spring.sns.repository.LikeEntityRepository;
 import com.spring.sns.repository.PostEntityRepository;
 import com.spring.sns.repository.UserEntityRepository;
@@ -24,6 +27,7 @@ public class PostService {
     private final PostEntityRepository postEntityRepository;
     private final UserEntityRepository userEntityRepository;
     private final LikeEntityRepository likeEntityRepository;
+    private final CommentEntityRepository commentEntityRepository;
 
     @Transactional
     public void create(String title, String body, String userName) {
@@ -94,6 +98,18 @@ public class PostService {
         return likeEntityRepository.countByPost(postEntity);
     }
 
+    @Transactional
+    public void comment(Integer postId, String userName, String comment) {
+        PostEntity postEntity = getPostOrException(postId);
+        UserEntity userEntity = getUserOrException(userName);
+
+        commentEntityRepository.save(CommentEntity.of(comment, userEntity, postEntity));
+    }
+
+    public Page<Comment> getComment(Integer postId, Pageable pageable) {
+        PostEntity postEntity = getPostOrException(postId);
+        return commentEntityRepository.findAllByPost(postEntity, pageable).map(Comment::fromEntity);
+    }
 
     private PostEntity getPostOrException(Integer postId) {
         return postEntityRepository.findById(postId).orElseThrow(() ->
