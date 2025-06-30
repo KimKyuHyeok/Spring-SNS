@@ -6,6 +6,7 @@ import com.spring.sns.fixture.PostEntityFixture;
 import com.spring.sns.fixture.UserEntityFixture;
 import com.spring.sns.model.entity.PostEntity;
 import com.spring.sns.model.entity.UserEntity;
+import com.spring.sns.repository.LikeEntityRepository;
 import com.spring.sns.repository.PostEntityRepository;
 import com.spring.sns.repository.UserEntityRepository;
 import org.junit.jupiter.api.Assertions;
@@ -35,6 +36,9 @@ public class PostServiceTest {
 
     @MockBean
     private UserEntityRepository userEntityRepository;
+
+    @MockBean
+    private LikeEntityRepository likeEntityRepository;
 
     @DisplayName("[Service] 포스트 작성 성공한 경우")
     @Test

@@ -1,6 +1,7 @@
 package com.spring.sns.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spring.sns.controller.request.PostCommentRequest;
 import com.spring.sns.controller.request.PostCreateRequest;
 import com.spring.sns.controller.request.PostModifyRequest;
 import com.spring.sns.exception.ErrorCode;
@@ -264,6 +265,41 @@ public class PostControllerTest {
 
         mockMvc.perform(post("/api/v1/posts/1/likes")
                         .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @DisplayName("[Controller] 댓글 작성")
+    @Test
+    @WithMockUser
+    void comment() throws Exception {
+        mockMvc.perform(post("/api/v1/posts/1/comment")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(new PostCommentRequest("comment")))
+                ).andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @DisplayName("[Controller] 댓글 작성 시 로그인 하지 않은 경우")
+    @Test
+    @WithAnonymousUser
+    void commentIsUnauthorized() throws Exception {
+        mockMvc.perform(post("/api/v1/posts/1/comment")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(new PostCommentRequest("comment")))
+                ).andDo(print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("[Controller] 댓글 작성 시 게시물이 없는 경우")
+    @Test
+    @WithMockUser
+    void commentIsNotFoundPost() throws Exception {
+        doThrow(new SnsApplicationException(ErrorCode.POST_NOT_FOUND)).when(postService).comment(any(), any(), "comment");
+
+        mockMvc.perform(post("/api/v1/posts/1/comment")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(new PostCommentRequest("comment")))
                 ).andDo(print())
                 .andExpect(status().isNotFound());
     }
